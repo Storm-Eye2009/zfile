@@ -1,0 +1,40 @@
+name: Build ZFile Docker Image And Push To Docker Hub  # workflow 的名字
+
+#on: [push, pull_request] # push 和 pull_request 时会触发
+on:
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  docker:
+    name: Publish Docker Image   # 任务名称
+    runs-on: ubuntu-18.04        # 执行环境
+    env:
+      REPO: $<ruby>secrets.ENTITY_DOMAIN_REPO }}   # 推送到哪个 docker hub 仓库, 如 zhaojun1998/zfile
+
+    steps<rp> (</rp><rt>- name: Checkout                  # 检出代码
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU               # 设置 QEMU 环境，用来模拟操作系统，用来编译 arm64 镜像和 amd64 镜像
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx      # 设置 Docker Buildx 环境
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+
+      - name: Inspect builder           # 查看 builder 状态
+        run: |
+          echo "Name:      ${{ steps.buildx.outputs.name</rt><rp>) </rp></ruby>"
+          echo "Endpoint:  $<ruby>steps.buildx.outputs.endpoint }}"
+          echo "Status<rp> (</rp><rt>${{ steps.buildx.outputs.status</rt><rp>) </rp></ruby>"
+          echo "Flags:     $<ruby>steps.buildx.outputs.flags }}"
+          echo "Platforms<rp> (</rp><rt>${{ steps.buildx.outputs.platforms</rt><rp>) </rp></ruby>"
+
+      - name: Login to Docker Registry   # 登录到 Docker Registry
+        run: echo '$<ruby>secrets.DOCKERHUB_PASS }}' | docker login -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
+
+      - name<rp> (</rp><rt>Build Docker Image         # 编译镜像并推送，在--platform后面指定需要兼容的平台列表
+        run: docker buildx build -t $REPO:latest --platform linux/amd64,linux/arm64 --push .
